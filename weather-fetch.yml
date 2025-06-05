@@ -1,0 +1,40 @@
+name: Fetch BMKG Weather Data
+
+# Pemicu (trigger) untuk menjalankan workflow
+on:
+  schedule:
+    - cron: '0 */3 * * *' # Jalankan setiap 3 jam (00:00, 03:00, 06:00, dst.)
+  workflow_dispatch: # Memungkinkan trigger manual untuk testing
+
+# Job yang akan dijalankan
+jobs:
+  fetch-weather:
+    runs-on: ubuntu-latest # Mesin virtual yang digunakan
+    steps:
+      # Langkah 1: Checkout kode dari repositori
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Langkah 2: Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Versi Python yang digunakan
+
+      # Langkah 3: Install dependensi Python
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests firebase-admin
+
+      # Langkah 4: Debug variabel lingkungan (untuk memeriksa FIREBASE_CREDENTIALS)
+      - name: Debug environment variable
+        run: |
+          echo "FIREBASE_CREDENTIALS exists: $FIREBASE_CREDENTIALS"
+          if [ -z "$FIREBASE_CREDENTIALS" ]; then echo "FIREBASE_CREDENTIALS is empty or not set"; exit 1; fi
+
+      # Langkah 5: Jalankan skrip Python
+      - name: Run weather fetch script
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+        run: python fetch_weather.py
